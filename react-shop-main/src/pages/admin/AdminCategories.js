@@ -175,11 +175,11 @@ const AdminCategories = () => {
                 <h5 className="mb-0 fw-semibold">Danh sách Category</h5>
               </Card.Header>
               <Card.Body>
-                <div className="table-responsive">
+                <div className="table-responsive text align-center">
                   <Table
                     hover
-                    striped // (THAY ĐỔI) Dùng sọc cho dễ nhìn
-                    className="align-middle text-start" // (THAY ĐỔI) Canh lề trái
+                    striped 
+                    className="text-center align-middle" 
                   >
                     <thead>
                       <tr>

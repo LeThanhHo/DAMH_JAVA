@@ -1,14 +1,14 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import cartService from '../services/cartService';
-import localCartService from '../services/localCartService';
-import authService from '../services/authService';
+import React, { createContext, useContext, useState, useEffect } from "react";
+import cartService from "../services/cartService";
+import localCartService from "../services/localCartService";
+import authService from "../services/authService";
 
 const CartContext = createContext();
 
 export const useCart = () => {
   const context = useContext(CartContext);
   if (!context) {
-    throw new Error('useCart must be used within a CartProvider');
+    throw new Error("useCart must be used within a CartProvider");
   }
   return context;
 };
@@ -16,7 +16,7 @@ export const useCart = () => {
 export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState({ items: [], totalAmount: 0 });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const isAuthenticated = authService.isAuthenticated();
 
   // Load cart khi component mount
@@ -27,20 +27,23 @@ export const CartProvider = ({ children }) => {
   const loadCart = async () => {
     try {
       setLoading(true);
-      setError('');
+      setError("");
 
       if (isAuthenticated) {
-        // Nếu đã đăng nhập, lấy giỏ hàng từ server
         const serverCart = await cartService.getCart();
-        setCart(serverCart);
+        const items = serverCart.items || [];
+
+        setCart({
+          items,
+          totalAmount: calculateTotalAmount(items),
+        });
       } else {
-        // Nếu chưa đăng nhập, lấy giỏ hàng từ localStorage
         const localCart = localCartService.getLocalCart();
         setCart(localCart);
       }
     } catch (err) {
-      console.error('Error loading cart:', err);
-      if (err.message.includes('Giỏ hàng trống')) {
+      console.error("Error loading cart:", err);
+      if (err.message.includes("Giỏ hàng trống")) {
         setCart({ items: [], totalAmount: 0 });
       } else {
         setError(err.message);
@@ -53,7 +56,7 @@ export const CartProvider = ({ children }) => {
   const addToCart = async (product, quantity = 1) => {
     try {
       setLoading(true);
-      setError('');
+      setError("");
 
       if (isAuthenticated) {
         // Thêm vào giỏ hàng server
@@ -75,7 +78,7 @@ export const CartProvider = ({ children }) => {
   const removeFromCart = async (itemId) => {
     try {
       setLoading(true);
-      setError('');
+      setError("");
 
       if (isAuthenticated) {
         // Xóa từ giỏ hàng server
@@ -97,7 +100,7 @@ export const CartProvider = ({ children }) => {
   const updateCartItem = async (itemId, quantity) => {
     try {
       setLoading(true);
-      setError('');
+      setError("");
 
       if (isAuthenticated) {
         // Cập nhật giỏ hàng server
@@ -105,7 +108,10 @@ export const CartProvider = ({ children }) => {
         await loadCart(); // Reload cart từ server
       } else {
         // Cập nhật giỏ hàng local
-        const updatedCart = localCartService.updateLocalCartItem(itemId, quantity);
+        const updatedCart = localCartService.updateLocalCartItem(
+          itemId,
+          quantity
+        );
         setCart(updatedCart);
       }
     } catch (err) {
@@ -119,7 +125,7 @@ export const CartProvider = ({ children }) => {
   const clearCart = async () => {
     try {
       setLoading(true);
-      setError('');
+      setError("");
 
       if (isAuthenticated) {
         // Xóa giỏ hàng server
@@ -128,7 +134,7 @@ export const CartProvider = ({ children }) => {
         // Xóa giỏ hàng local
         localCartService.clearLocalCart();
       }
-      
+
       setCart({ items: [], totalAmount: 0 });
     } catch (err) {
       setError(err.message);
@@ -141,19 +147,27 @@ export const CartProvider = ({ children }) => {
   const syncCartOnLogin = async () => {
     try {
       setLoading(true);
-      setError('');
+      setError("");
 
       // Đồng bộ giỏ hàng local với server
       await localCartService.syncCartWithServer(cartService);
-      
+
       // Load lại giỏ hàng từ server
       await loadCart();
     } catch (err) {
       setError(err.message);
-      console.error('Error syncing cart on login:', err);
+      console.error("Error syncing cart on login:", err);
     } finally {
       setLoading(false);
     }
+  };
+  const calculateTotalAmount = (items) => {
+    return items.reduce((total, item) => {
+      const price = Number(
+        item.product.priceProduct || item.product.price || 0
+      );
+      return total + price * item.quantity;
+    }, 0);
   };
 
   const getCartItemCount = () => {
@@ -170,14 +184,10 @@ export const CartProvider = ({ children }) => {
     clearCart,
     loadCart,
     syncCartOnLogin,
-    getCartItemCount
+    getCartItemCount,
   };
 
-  return (
-    <CartContext.Provider value={value}>
-      {children}
-    </CartContext.Provider>
-  );
+  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 };
 
 export default CartContext;

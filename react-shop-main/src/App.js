@@ -30,6 +30,7 @@ import CartDebug from './debug/CartDebug';
 import './App.css';
 import './styles/cart.css';
 import './styles/checkout.css';
+import AdminOrder from './pages/admin/AdminOrder';
 
 function App() {
   return (
@@ -61,6 +62,7 @@ function App() {
               <Route path="/admin/products" element={<AdminProducts />} />
               <Route path="/admin/categories" element={<AdminCategories />} />
               <Route path="/admin/user" element={<AdminUser />} />
+              <Route path="/admin/orders" element={<AdminOrder />} />
 
               <Route path={ROUTES.USERS} element={<UsersPage />} />
               <Route path={ROUTES.USER_DETAILS} element={<UserDetailPage />} />

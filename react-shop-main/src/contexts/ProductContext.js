@@ -35,12 +35,11 @@ export const ProductProvider = ({ children }) => {
     fetchData();
   }, []);
 
+  // Lấy sản phẩm theo danh mục
   const getProductsByCategory = async (categoryId) => {
     try {
-      if (!categoryId) {
-        return products;
-      }
-      
+      if (!categoryId) return products;
+
       const selectedCat = categories.find(c => c.id === categoryId);
       if (selectedCat?.productIds?.length > 0) {
         return await Promise.all(
@@ -54,6 +53,24 @@ export const ProductProvider = ({ children }) => {
     }
   };
 
+  // Lấy sản phẩm mới nhất (top 3)
+const getProductsNewest = async () => {
+  try {
+    if (!products || products.length === 0) return [];
+
+    // Sort tăng dần theo createdAt (cũ → mới)
+    const sorted = [...products].sort(
+      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+    );
+
+    // Lấy 10 sản phẩm mới nhất (tức là 10 cuối cùng trong danh sách cũ → mới)
+    return sorted.slice(-5);
+  } catch (err) {
+    console.error('Error getting newest products:', err);
+    throw new Error('Không thể tải sản phẩm mới nhất.');
+  }
+};
+  // Làm mới dữ liệu
   const refreshData = async () => {
     try {
       setLoading(true);
@@ -77,6 +94,7 @@ export const ProductProvider = ({ children }) => {
     loading,
     error,
     getProductsByCategory,
+    getProductsNewest,
     refreshData
   };
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Button } from 'react-bootstrap';
-import Layout from '../../components/layout/Layout';
+import Layout from "../../components/layout/AdminLayout";
 import Loading from '../../components/common/Loading';
 import ErrorMessage from '../../components/common/ErrorMessage';
 import OrderList from '../../components/orders/OrderList';

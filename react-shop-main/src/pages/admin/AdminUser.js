@@ -90,30 +90,36 @@ const AdminUser = () => {
   };
 
   // 🔹 Lưu user (thêm mới hoặc cập nhật)
+  // Trong handleSubmit @ AdminUser.js
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setFormError("");
-    setFormSuccess("");
-
+    // ...
     try {
       if (editingUser) {
-        await userService.updateUser(editingUser.id, formData);
+        // Tạo đối tượng dữ liệu chỉ chứa các trường cần cập nhật
+        const dataToUpdate = {
+          username: formData.username,
+          email: formData.email,
+          role: formData.role,
+        };
+
+        // CHỈ THÊM PASSWORD NẾU NGƯỜI DÙNG THỰC SỰ NHẬP MẬT KHẨU MỚI
+        if (formData.password) {
+          dataToUpdate.password = formData.password;
+        }
+
+        // Gọi service với dữ liệu đã lọc
+        await userService.updateUser(editingUser.id, dataToUpdate);
         setFormSuccess("✅ Cập nhật người dùng thành công!");
       } else {
+        // Logic tạo mới giữ nguyên
         await userService.register(formData);
         setFormSuccess("✅ Thêm người dùng mới thành công!");
       }
-
-      setTimeout(() => {
-        handleCloseModal();
-        fetchUsers();
-      }, 1000);
+      // ...
     } catch (err) {
-      setFormError(err.message || "❌ Có lỗi xảy ra khi lưu người dùng.");
-      console.error("Error saving user:", err);
+      // ...
     }
   };
-
   // 🔹 Xóa người dùng
   const handleDelete = async (id) => {
     if (window.confirm("Bạn có chắc chắn muốn xóa người dùng này?")) {
@@ -141,7 +147,12 @@ const AdminUser = () => {
           <div className="d-flex justify-content-between align-items-center mb-4">
             <h3 className="fw-bold text-primary mb-0">👥 Quản lý Người dùng</h3>
             <div>
-              <Button as={Link} to="/admin" variant="outline-secondary" className="me-2">
+              <Button
+                as={Link}
+                to="/admin"
+                variant="outline-secondary"
+                className="me-2"
+              >
                 <FaArrowLeft className="me-2" /> Dashboard
               </Button>
               <Button variant="primary" onClick={() => handleShowModal()}>
@@ -167,13 +178,18 @@ const AdminUser = () => {
                 {users.length > 0 ? (
                   users.map((u) => (
                     <tr key={u.id}>
-                      <td><Badge bg="secondary">{u.id}</Badge></td>
+                      <td>
+                        <Badge bg="secondary">{u.id}</Badge>
+                      </td>
                       <td className="fw-semibold">{u.username}</td>
                       <td>{u.email}</td>
                       <td>
                         <Badge bg={u.role === "ADMIN" ? "danger" : "info"}>
                           {u.role}
                         </Badge>
+                        {/* <Badge bg={u.role === "USER" ? "danger" : "info"}>
+                            {u.role}
+                          </Badge> */}
                       </td>
                       <td>
                         <Button
@@ -266,7 +282,11 @@ const AdminUser = () => {
               </Form.Group>
 
               <div className="d-flex justify-content-end">
-                <Button variant="outline-secondary" className="me-2" onClick={handleCloseModal}>
+                <Button
+                  variant="outline-secondary"
+                  className="me-2"
+                  onClick={handleCloseModal}
+                >
                   Hủy
                 </Button>
                 <Button variant="primary" type="submit">

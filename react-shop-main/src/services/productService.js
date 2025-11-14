@@ -65,7 +65,18 @@ const productService = {
       console.error('Error deleting product:', error);
       throw error;
     }
-  }
+  },
+    getProductsnNewest: async () => {
+    try {
+      const response = await api.get('/api/products/newest');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching products from API:', error);
+      throw new Error('Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng và thử lại.');
+    }
+  },
+
+
 };
 
 export default productService;

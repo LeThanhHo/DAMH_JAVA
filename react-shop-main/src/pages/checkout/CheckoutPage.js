@@ -126,7 +126,7 @@ const CheckoutPage = () => {
                   <Row>
                     <Col md={6}>
                       <Form.Group className="mb-3">
-                        <Form.Label>Họ và tên *</Form.Label>
+                        <Form.Label>Họ và tên </Form.Label>
                         <Form.Control
                           type="text"
                           name="customerName"
@@ -153,7 +153,7 @@ const CheckoutPage = () => {
                   </Row>
 
                   <Form.Group className="mb-3">
-                    <Form.Label>Số điện thoại *</Form.Label>
+                    <Form.Label>Số điện thoại </Form.Label>
                     <Form.Control
                       type="tel"
                       name="phone"
@@ -165,7 +165,7 @@ const CheckoutPage = () => {
                   </Form.Group>
 
                   <Form.Group className="mb-3">
-                    <Form.Label>Địa chỉ giao hàng *</Form.Label>
+                    <Form.Label>Địa chỉ giao hàng </Form.Label>
                     <Form.Control
                       as="textarea"
                       rows={3}

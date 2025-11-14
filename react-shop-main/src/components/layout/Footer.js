@@ -10,7 +10,7 @@ const Footer = () => {
       fontFamily: "'Poppins', sans-serif",
       paddingTop: "3rem",
       paddingBottom: "3rem",
-      marginTop: "4rem",
+      // marginTop: "4rem",
     },
     heading: {
       color: "#00b894",
@@ -107,7 +107,7 @@ const Footer = () => {
           <Col md={3} className="mb-4 mb-md-0">
             <h5 style={styles.heading}>Liên hệ</h5>
             <ul style={styles.list}>
-              <li>Email: lethanhho.hb2005@gmail.com</li>
+              <li>Email: admin.hb2005@gmail.com</li>
               <li>Điện thoại: 0398820547</li>
               <li>Địa chỉ: Cao Đẳng Công Thương TP.HCM</li>
             </ul>
@@ -120,7 +120,7 @@ const Footer = () => {
               {[FaFacebookF, FaInstagram, FaTwitter].map((Icon, i) => (
                 <a
                   key={i}
-                  href="#"
+                  href="https://www.facebook.com/"
                   style={styles.socialLink}
                   onMouseEnter={(e) => {
                     e.target.style.backgroundColor = "#55efc4";

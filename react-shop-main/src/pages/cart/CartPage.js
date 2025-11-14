@@ -5,14 +5,20 @@ import Layout from '../../components/layout/Layout';
 import Loading from '../../components/common/Loading';
 import { useCart } from '../../contexts/CartContext';
 import authService from '../../services/authService';
-// import { ROUTES } from '../../utils/constants';
 
 const CartPage = () => {
   const { cart, loading, error, removeFromCart, updateCartItem, clearCart } = useCart();
   const navigate = useNavigate();
   const isAuthenticated = authService.isAuthenticated();
 
+  // --- Thêm / chỉnh sửa số lượng ---
   const handleQuantityChange = async (itemId, newQuantity) => {
+    if (!isAuthenticated) {
+      alert('Bạn cần đăng nhập để thêm hoặc sửa sản phẩm trong giỏ hàng.');
+      navigate('/login');
+      return;
+    }
+
     if (newQuantity < 1) {
       await removeFromCart(itemId);
     } else {
@@ -20,31 +26,47 @@ const CartPage = () => {
     }
   };
 
+  // --- Xóa sản phẩm ---
   const handleRemoveItem = async (itemId) => {
+    if (!isAuthenticated) {
+      alert('Bạn cần đăng nhập để xóa sản phẩm trong giỏ hàng.');
+      navigate('/login');
+      return;
+    }
+
     if (window.confirm('Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng?')) {
       await removeFromCart(itemId);
     }
   };
 
+  // --- Xóa toàn bộ giỏ ---
   const handleClearCart = async () => {
+    if (!isAuthenticated) {
+      alert('Bạn cần đăng nhập để xóa toàn bộ giỏ hàng.');
+      navigate('/login');
+      return;
+    }
+
     if (window.confirm('Bạn có chắc chắn muốn xóa toàn bộ giỏ hàng?')) {
       await clearCart();
     }
   };
 
+  // --- Checkout ---
   const handleCheckout = () => {
-    // Cho phép checkout cho cả người dùng đã đăng nhập và chưa đăng nhập
+    if (!isAuthenticated) {
+      alert('Bạn cần đăng nhập để tiến hành thanh toán.');
+      navigate('/login');
+      return;
+    }
     navigate('/checkout');
   };
 
   const formatPrice = (price) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND'
-    }).format(price);
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
   };
 
-  if (loading) return <Layout><Loading /></Layout>;
+  // if (loading) return <Layout><Loading /></Layout>;
 
   return (
     <Layout>
@@ -57,6 +79,12 @@ const CartPage = () => {
         </div>
 
         {error && <Alert variant="danger">{error}</Alert>}
+
+        {!isAuthenticated && (
+          <Alert variant="warning" className="mb-3">
+            Bạn phải <Link to="/login">đăng nhập</Link> để thêm sản phẩm vào giỏ hàng và thanh toán.
+          </Alert>
+        )}
 
         {cart.items.length === 0 ? (
           <Card className="text-center p-5">
@@ -112,9 +140,7 @@ const CartPage = () => {
                                 </div>
                               </div>
                             </td>
-                            <td className="align-middle">
-                              {formatPrice(price)}
-                            </td>
+                            <td className="align-middle">{formatPrice(price)}</td>
                             <td className="align-middle">
                               <div className="d-flex align-items-center">
                                 <Button
@@ -178,15 +204,6 @@ const CartPage = () => {
                     <strong>Tổng cộng:</strong>
                     <strong className="text-primary">{formatPrice(cart.totalAmount)}</strong>
                   </div>
-
-                  {!isAuthenticated && (
-                    <Alert variant="info" className="mb-3">
-                      <small>
-                        Bạn có thể đặt hàng mà không cần đăng nhập. 
-                        Tuy nhiên, việc đăng nhập sẽ giúp bạn theo dõi đơn hàng dễ dàng hơn.
-                      </small>
-                    </Alert>
-                  )}
 
                   <Button
                     variant="primary"

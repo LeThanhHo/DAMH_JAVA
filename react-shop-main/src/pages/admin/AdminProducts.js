@@ -218,7 +218,7 @@ const AdminProducts = () => {
                 <h5 className="mb-0 fw-semibold">Danh sách Sản phẩm</h5>
               </Card.Header>
               <Card.Body>
-                <div className="table-responsive">
+                <div className="table-responsive text align-center">
                   <Table
                     hover
                     striped // (THAY ĐỔI)

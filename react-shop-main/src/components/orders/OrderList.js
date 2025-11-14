@@ -46,7 +46,7 @@ const OrderList = ({ orders }) => {
                 </Button>
               </td>
             </tr>
-          ))}
+          ))} 
         </tbody>
       </Table>
     </div>

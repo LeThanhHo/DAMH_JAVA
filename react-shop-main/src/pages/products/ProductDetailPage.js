@@ -37,7 +37,6 @@ const ProductDetailPage = () => {
   }, [id]);
 
   const handleOrderPlaced = () => {
-    // Refresh product data to update stock quantity
     const fetchUpdatedProduct = async () => {
       try {
         const data = await productService.getProductById(id);
@@ -47,7 +46,6 @@ const ProductDetailPage = () => {
         setError(err.message || 'Không thể cập nhật thông tin sản phẩm.');
       }
     };
-
     fetchUpdatedProduct();
   };
 
@@ -68,16 +66,33 @@ const ProductDetailPage = () => {
       </div>
       
       <Row>
-        <Col md={8}>
-          <Card className="product-detail-card mb-4">
+        <Col md={5}>
+          {/* ✅ Hiển thị hình ảnh sản phẩm */}
+          <Card className="shadow-sm mb-4">
+            <Card.Img 
+              variant="top" 
+              src={
+                product. productImage = product.imageUrl || product.image
+              } 
+              alt={product.nameProduct} 
+              className="img-fluid rounded" 
+              style={{ objectFit: 'cover', maxHeight: '400px' }}
+            />
+          </Card>
+        </Col>
+
+        <Col md={7}>
+          <Card className="product-detail-card mb-4 shadow-sm">
             <Card.Body className="p-4">
-              <span className="product-category">{product.category?.name || 'Uncategorized'}</span>
+              <span className="product-category text-muted">
+                {product.category?.name || 'Uncategorized'}
+              </span>
               <h1 className="mb-2">{product.nameProduct}</h1>
               <h5 className="text-muted mb-4">{product.brand}</h5>
               
               <div className="d-flex align-items-center mb-4">
-                <h3 className="product-price me-3">${product.priceProduct}</h3>
-                <Badge bg={product.quantity > 0 ? 'success' : 'danger'} className="stock-badge me-2">
+                <h3 className="product-price me-3 text-primary">${product.priceProduct}</h3>
+                <Badge bg={product.quantity > 0 ? 'success' : 'danger'} className="me-2">
                   {product.quantity > 0 ? 'In Stock' : 'Out of Stock'}
                 </Badge>
                 {product.quantity > 0 && (
@@ -87,7 +102,9 @@ const ProductDetailPage = () => {
               
               <div className="mb-4">
                 <h5 className="detail-section-title">Description</h5>
-                <p className="detail-text">{product.descriptionProduct || 'No description available.'}</p>
+                <p className="detail-text">
+                  {product.descriptionProduct || 'No description available.'}
+                </p>
               </div>
 
               <div className="mb-4">
@@ -99,13 +116,9 @@ const ProductDetailPage = () => {
                   className="me-3"
                 />
               </div>
-              
-          
             </Card.Body>
           </Card>
-        </Col>
-        
-        <Col md={4}>
+
           {isAuthenticated && (
             <div className="order-form-container">
               <OrderForm product={product} onOrderPlaced={handleOrderPlaced} />

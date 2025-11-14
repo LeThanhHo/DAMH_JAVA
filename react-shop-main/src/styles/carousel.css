@@ -1,0 +1,30 @@
+.banner-img {
+    width: 500px;
+    height: 450px;
+    /* object-fit: cover; */
+    transition: transform 0.8s ease-in-out, opacity 0.8s ease-in-out;
+}
+
+.carousel-item.active .banner-img {
+  transform: scale(1.05);
+  opacity: 1;
+}
+
+.carousel-item .banner-img {
+  opacity: 0.85;
+}
+
+.carousel-control-prev-icon,
+.carousel-control-next-icon {
+  background-color: rgba(0, 0, 0, 0.4);
+  border-radius: 50%;
+  padding: 12px;
+}
+
+.carousel-indicators [data-bs-target] {
+  background-color: #555;
+}
+
+.carousel-indicators .active {
+  background-color: #fff;
+}

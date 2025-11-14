@@ -19,6 +19,7 @@ export const ROUTES = {
   REGISTER: '/register',
   REGISTER_ADMIN: '/register-admin',
   ADMIN_DASHBOARD: '/admin',
+  
 };
 
 // Roles

@@ -1,19 +1,34 @@
-import api from './api';
-import localCartService from './localCartService';
-import authService from './authService';
+import api from "./api";
+import localCartService from "./localCartService";
+import authService from "./authService";
 
-// Khởi tạo cart service với cấu trúc giống local storage
 const cartService = {
-  // Lấy giỏ hàng
+  // 🛒 Lấy giỏ hàng
   getCart: async () => {
     const isAuthenticated = authService.isAuthenticated();
-    
+
     if (isAuthenticated) {
       try {
-        const response = await api.get('/api/users/cart');
-        return response.data || { items: [] };
+        const response = await api.get("/api/cart");
+        const data = response.data;
+
+        // Chuẩn hóa dữ liệu về dạng { items: [...] }
+        if (data && Array.isArray(data.cartItems)) {
+          return {
+            items: data.cartItems.map((item) => ({
+              id: item.id,
+              productId: item.product?.id,
+              name: item.product?.nameProduct || item.product?.name,
+              price: item.product?.priceProduct || item.product?.price,
+              imageUrl: item.product?.imageUrl,
+              quantity: item.quantity,
+            })),
+          };
+        }
+
+        return data?.items ? data : { items: [] };
       } catch (error) {
-        console.error('Error fetching cart:', error);
+        console.error("Error fetching cart:", error);
         return { items: [] };
       }
     } else {
@@ -21,182 +36,131 @@ const cartService = {
     }
   },
 
-  // Thêm sản phẩm vào giỏ hàng
+  // ➕ Thêm sản phẩm vào giỏ hàng
   addToCart: async (product, quantity = 1) => {
     const isAuthenticated = authService.isAuthenticated();
-    
+
     if (isAuthenticated) {
       try {
-        // Lấy giỏ hàng hiện tại
-        const currentCart = await cartService.getCart();
-        
-        // Tạo cart item mới
-        const cartItem = {
-          productId: product.id,
-          quantity: quantity,
-          name: product.nameProduct,
-          price: product.priceProduct,
-          imageUrl: product.imageUrl
-        };
-
-        // Thêm hoặc cập nhật item trong giỏ hàng
-        const updatedItems = [...currentCart.items];
-        const existingItemIndex = updatedItems.findIndex(item => item.productId === product.id);
-        
-        if (existingItemIndex > -1) {
-          updatedItems[existingItemIndex].quantity += quantity;
-        } else {
-          updatedItems.push(cartItem);
-        }
-
-        const updatedCart = { items: updatedItems };
-        const response = await api.post('/api/users/cart', updatedCart);
-        console.log('Server response:', response.data);
+        // Gọi API /api/cart/add
+        const response = await api.post("/api/cart/add", null, {
+          params: {
+            productId: product.id,
+            quantity: quantity,
+          },
+        });
+        console.log("Server response:", response.data);
         return response.data;
       } catch (error) {
-        console.error('Error adding to cart:', error);
-        
-        // Log detailed error information
+        console.error("Error adding to cart:", error);
         if (error.response) {
-          console.error('Server Error Details:', {
-            status: error.response.status,
-            statusText: error.response.statusText,
-            data: error.response.data,
-            headers: error.response.headers
-          });
-        }
-
-        // Xử lý các loại lỗi
-        if (error.response) {
+          console.error("Server Error Details:", error.response);
           switch (error.response.status) {
             case 400:
-              throw new Error('Sản phẩm không hợp lệ hoặc không đủ hàng trong kho.');
+              throw new Error("Sản phẩm không hợp lệ hoặc không đủ hàng.");
             case 401:
-              throw new Error('Phiên đăng nhập hết hạn, vui lòng đăng nhập lại.');
+              throw new Error(
+                "Phiên đăng nhập hết hạn, vui lòng đăng nhập lại."
+              );
             case 403:
-              throw new Error('Bạn không có quyền thực hiện chức năng này.');
+              throw new Error("Bạn không có quyền thực hiện thao tác này.");
             case 404:
-              throw new Error('Sản phẩm không tồn tại.');
+              throw new Error("Sản phẩm không tồn tại.");
             case 500:
-              console.error('Server Error Stack:', error.response.data);
-              throw new Error('Lỗi server. Vui lòng thử lại sau hoặc liên hệ admin.');
+              throw new Error("Lỗi hệ thống. Vui lòng thử lại sau.");
             default:
-              throw new Error(`Lỗi ${error.response.status}: ${error.response.data?.message || 'Không thể thêm sản phẩm vào giỏ hàng.'}`);
+              throw new Error(`Lỗi ${error.response.status}`);
           }
         }
-        
-        // Nếu không có response từ server
-        if (error.request) {
-          console.error('No response received:', error.request);
-          throw new Error('Không nhận được phản hồi từ server. Vui lòng kiểm tra kết nối mạng.');
-        }
-        
-        // Lỗi khác
-        throw new Error('Lỗi không xác định: ' + error.message);
+        throw new Error("Không thể thêm sản phẩm vào giỏ hàng.");
       }
     } else {
+      // Nếu chưa đăng nhập, lưu giỏ hàng ở local
       return Promise.resolve(localCartService.addToCart(product, quantity));
     }
   },
 
-  // Xóa sản phẩm khỏi giỏ hàng
-  removeFromCart: async (product) => {
+  // ❌ Xóa sản phẩm khỏi giỏ hàng
+  removeFromCart: async (cartItemId) => {
     const isAuthenticated = authService.isAuthenticated();
-    
+
     if (isAuthenticated) {
       try {
-        // Lấy giỏ hàng hiện tại
-        const currentCart = await cartService.getCart();
-        
-        // Xóa item khỏi giỏ hàng
-        const updatedItems = currentCart.items.filter(item => item.productId !== product.id);
-        const updatedCart = { items: updatedItems };
-        
-        // Cập nhật giỏ hàng trên server
-        const response = await api.post('/api/users/cart', updatedCart);
+        const response = await api.delete(`/api/cart/remove/${cartItemId}`);
         return response.data;
       } catch (error) {
-        console.error('Error removing from cart:', error);
-        throw new Error('Không thể xóa sản phẩm khỏi giỏ hàng. Vui lòng thử lại.');
+        console.error("Error removing from cart:", error);
+        throw new Error("Không thể xóa sản phẩm khỏi giỏ hàng.");
       }
     } else {
-      return Promise.resolve(localCartService.removeItem(product.id));
+      return Promise.resolve(localCartService.removeItem(cartItemId));
     }
   },
 
-  // Xóa toàn bộ giỏ hàng
+  // 🧹 Xóa toàn bộ giỏ hàng
   clearCart: async () => {
     const isAuthenticated = authService.isAuthenticated();
-    
+
     if (isAuthenticated) {
       try {
-        // Gửi giỏ hàng rỗng lên server
-        const emptyCart = { items: [] };
-        const response = await api.post('/api/users/cart', emptyCart);
-        return response.data;
+        await api.delete("/api/cart/clear");
+        return { items: [] };
       } catch (error) {
-        console.error('Error clearing cart:', error);
-        throw new Error('Không thể xóa giỏ hàng. Vui lòng thử lại.');
+        console.error("Error clearing cart:", error);
+        throw new Error("Không thể xóa giỏ hàng.");
       }
     } else {
       return Promise.resolve(localCartService.clearCart());
     }
   },
 
-  // Cập nhật số lượng sản phẩm trong giỏ hàng
-  updateCartItem: async (product, quantity) => {
+  // 🔄 Cập nhật số lượng sản phẩm trong giỏ hàng
+  updateCartItem: async (cartItemId, quantity) => {
     const isAuthenticated = authService.isAuthenticated();
-    
+
     if (isAuthenticated) {
       try {
-        // Lấy giỏ hàng hiện tại
-        const currentCart = await cartService.getCart();
-        
-        // Cập nhật số lượng của item
-        const updatedItems = currentCart.items.map(item => {
-          if (item.productId === product.id) {
-            return { ...item, quantity: quantity };
-          }
-          return item;
+        const response = await api.put("/api/cart/update", null, {
+          params: { cartItemId, quantity },
         });
-
-        // Cập nhật giỏ hàng trên server
-        const updatedCart = { items: updatedItems };
-        const response = await api.post('/api/users/cart', updatedCart);
         return response.data;
       } catch (error) {
-        console.error('Error updating cart item:', error);
-        throw new Error('Không thể cập nhật giỏ hàng. Vui lòng thử lại.');
+        console.error("Error updating cart item:", error);
+        if (error.response?.data?.message) {
+          throw new Error(error.response.data.message);
+        }
+        throw new Error("Không thể cập nhật giỏ hàng.");
       }
     } else {
-      return Promise.resolve(localCartService.updateQuantity(product.id, quantity));
+      return Promise.resolve(
+        localCartService.updateQuantity(cartItemId, quantity)
+      );
     }
   },
-
-  // Đồng bộ giỏ hàng local lên server sau khi đăng nhập
+  // ☁️ Đồng bộ giỏ hàng local lên server sau khi đăng nhập
   syncCartOnLogin: async () => {
     const localCart = localCartService.getCart();
+
     if (localCart.items.length > 0) {
       try {
-        // Thêm từng sản phẩm trong giỏ hàng local vào giỏ hàng server
-        await Promise.all(localCart.items.map(item => 
-          cartService.addToCart({
-            id: item.productId,
-            nameProduct: item.name,
-            priceProduct: item.price,
-            imageUrl: item.imageUrl
-          }, item.quantity)
-        ));
-        
-        // Xóa giỏ hàng local sau khi đồng bộ thành công
+        for (const item of localCart.items) {
+          await cartService.addToCart(
+            {
+              id: item.productId,
+              nameProduct: item.name,
+              priceProduct: item.price,
+              imageUrl: item.imageUrl,
+            },
+            item.quantity
+          );
+        }
         localCartService.clearCart();
       } catch (error) {
-        console.error('Error syncing cart:', error);
-        throw new Error('Không thể đồng bộ giỏ hàng. Vui lòng thử lại.');
+        console.error("Error syncing cart:", error);
+        throw new Error("Không thể đồng bộ giỏ hàng.");
       }
     }
-  }
+  },
 };
 
-// Export cartService as default
 export default cartService;

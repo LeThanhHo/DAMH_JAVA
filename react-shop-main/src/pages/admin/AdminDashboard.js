@@ -1,101 +1,124 @@
 // File: src/pages/admin/AdminDashboard.js
-
-import React from "react";
-import {
-  Container,
-  Row,
-  Col,
-  Card,
-  Table, // Bỏ Button vì không dùng nữa
-  Badge,
-} from "react-bootstrap";
-// Import AdminLayout
-import AdminLayout from "../../components/layout/AdminLayout"; // Đảm bảo đường dẫn này đúng
+import React, { useEffect, useState } from "react";
+import { Container, Row, Col, Card, Table, Badge } from "react-bootstrap";
+import AdminLayout from "../../components/layout/AdminLayout";
+import orderService from "../../services/orderService";
+import productService from "../../services/productService";
 
 const AdminDashboard = () => {
-  // Dữ liệu giả (mock data)
-  const statsData = [
-    {
-      title: "Tổng doanh thu (Tháng)",
-      value: "1.2 Tỷ VNĐ",
-      icon: <i className="fas fa-chart-line fa-2x text-success"></i>,
-    },
-    {
-      title: "Đơn hàng mới",
-      value: "15",
-      icon: <i className="fas fa-shopping-cart fa-2x text-primary"></i>,
-    },
-    {
-      title: "Sản phẩm (Xe đạp)",
-      value: "120",
-      icon: <i className="fas fa-bicycle fa-2x text-info"></i>,
-    },
-    {
-      title: "Khách hàng mới",
-      value: "8",
-      icon: <i className="fas fa-user-plus fa-2x text-warning"></i>,
-    },
-  ];
+  const [orders, setOrders] = useState([]);
+  const [productsCount, setProductsCount] = useState(0);
+  const [totalRevenue, setTotalRevenue] = useState(0);
+  const [loading, setLoading] = useState(true);
 
-  const recentOrders = [
-    {
-      id: "#8921",
-      customer: "Nguyễn Văn An",
-      product: "Xe đạp địa hình MTB",
-      total: "15.000.000 VNĐ",
-      status: "Pending",
-    },
-    {
-      id: "#8920",
-      customer: "Trần Thị Bích",
-      product: "Xe đạp đua (Road)",
-      total: "22.500.000 VNĐ",
-      status: "Completed",
-    },
-    {
-      id: "#8919",
-      customer: "Lê Minh",
-      product: "Xe đạp thành phố",
-      total: "8.200.000 VNĐ",
-      status: "Completed",
-    },
-    {
-      id: "#8918",
-      customer: "Phạm Hùng",
-      product: "Xe đạp gấp",
-      total: "11.000.000 VNĐ",
-      status: "Cancelled",
-    },
-  ];
+  // 🔹 Lấy dữ liệu từ backend
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Lấy toàn bộ đơn hàng
+        const allOrders = await orderService.getAllOrders();
+
+        // Sắp xếp theo ngày đặt (mới nhất)
+        const sortedOrders = allOrders.sort(
+          (a, b) => new Date(b.orderDate) - new Date(a.orderDate)
+        );
+
+        // Lấy 5 đơn hàng gần nhất
+        setOrders(sortedOrders.slice(0, 5));
+
+        // Tính tổng doanh thu
+        const revenue = allOrders.reduce(
+          (sum, order) => sum + (order.totalAmount || 0),
+          0
+        );
+        setTotalRevenue(revenue);
+
+        // Lấy tổng số sản phẩm
+        const products = await productService.getAllProducts();
+        setProductsCount(products.length);
+
+      } catch (err) {
+        console.error("❌ Error fetching dashboard data:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  // ✅ Định dạng tiền VND
+  const formatPrice = (price) =>
+    new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
+    }).format(price);
+
+  // ✅ Định dạng ngày theo kiểu Shopee (dd/MM/yyyy - HH:mm)
+  const formatDate = (dateString) => {
+    if (!dateString) return "Chưa có";
+    const date = new Date(dateString);
+    const formatted = date.toLocaleString("vi-VN", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    return formatted.replace(",", " -");
+  };
 
   const getStatusBadge = (status) => {
     switch (status) {
-      case "Pending":
+      case "PENDING":
         return "warning";
-      case "Completed":
+      case "CONFIRMED":
+        return "info";
+      case "DELIVERED":
         return "success";
-      case "Cancelled":
+      case "CANCELLED":
         return "danger";
       default:
         return "secondary";
     }
   };
 
+  const statsData = [
+    {
+      title: "Tổng doanh thu",
+      value: formatPrice(totalRevenue),
+      icon: <i className="fas fa-chart-line fa-2x text-success"></i>,
+    },
+    {
+      title: "Đơn hàng mới",
+      value: orders.length,
+      icon: <i className="fas fa-shopping-cart fa-2x text-primary"></i>,
+    },
+    {
+      title: "Sản phẩm",
+      value: productsCount,
+      icon: <i className="fas fa-bicycle fa-2x text-info"></i>,
+    },
+  ];
+
+  if (loading)
+    return (
+      <AdminLayout>
+        <p>Đang tải dữ liệu...</p>
+      </AdminLayout>
+    );
+
   return (
     <AdminLayout>
       <Container fluid>
-        {/* Tiêu đề chào mừng */}
-        <Row className="mb-4 align-items-center">
+        <Row className="mb-4">
           <Col>
             <h3 className="mb-0">Chào mừng trở lại, Admin!</h3>
-            <p className="text-muted">
-              LÀM VIỆC HIỆU QUẢ 
-              TINH THẦN TRÁCH NHIỆM CAO
-            </p>
+            <p className="text-muted">Quản lý hiệu quả cửa hàng của bạn</p>
           </Col>
         </Row>
 
-        {/* Các thẻ thống kê */}
+        {/* ✅ Thống kê tổng quan */}
         <Row className="mb-4">
           {statsData.map((stat, index) => (
             <Col md={6} lg={3} key={index} className="mb-3">
@@ -114,35 +137,32 @@ const AdminDashboard = () => {
           ))}
         </Row>
 
-        {/* Đơn hàng gần đây (Chiếm toàn bộ hàng) */}
+        {/* ✅ Bảng đơn hàng gần nhất */}
         <Row>
-          {/* SỬA: Thay lg={8} thành lg={12} và xóa cột Tác vụ nhanh */}
           <Col lg={12} className="mb-4">
             <Card className="shadow-sm h-100">
-              <Card.Header as="h5">Đơn hàng gần đây</Card.Header>
+              <Card.Header as="h5">5 Đơn hàng gần nhất</Card.Header>
               <Card.Body>
                 <Table responsive striped hover>
                   <thead>
                     <tr>
                       <th>Mã ĐH</th>
                       <th>Khách hàng</th>
-                      <th>Sản phẩm</th>
+                      <th>Ngày đặt</th> {/* ✅ Thêm cột ngày đặt */}
                       <th>Tổng tiền</th>
                       <th>Trạng thái</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {recentOrders.map((order) => (
+                    {orders.map((order) => (
                       <tr key={order.id}>
-                        <td>
-                          <strong>{order.id}</strong>
-                        </td>
-                        <td>{order.customer}</td>
-                        <td>{order.product}</td>
-                        <td>{order.total}</td>
+                        <td><strong>#{order.id}</strong></td>
+                        <td>{order.customerName}</td>
+                        <td>{formatDate(order.orderDate)}</td> {/* ✅ Hiển thị ngày */}
+                        <td>{formatPrice(order.totalAmount)}</td>
                         <td>
                           <Badge bg={getStatusBadge(order.status)}>
-                            {order.status}
+                            {order.status || "PENDING"}
                           </Badge>
                         </td>
                       </tr>

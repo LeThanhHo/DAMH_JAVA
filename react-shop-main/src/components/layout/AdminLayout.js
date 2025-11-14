@@ -54,7 +54,7 @@ const AdminLayout = ({ children }) => {
             </Nav.Link>
           </Nav.Item>
           <Nav.Item className="mb-3">
-            <Nav.Link as={Link} to={ROUTES.ORDERS} className="text-dark">
+            <Nav.Link as={Link} to="/admin/orders" className="text-dark">
               <i className="fas fa-file-invoice-dollar me-2"></i> Orders
             </Nav.Link>
           </Nav.Item>
@@ -83,7 +83,7 @@ const AdminLayout = ({ children }) => {
             zIndex: 1030,
           }}
         >
-          <div className="fw-semibold">Quản lý trang web y</div>
+          <div className="fw-semibold">Quản lý trang web </div>
           <div>
             <i className="fas fa-cog me-3" style={{ cursor: "pointer" }}></i>
             <i className="fas fa-sync-alt me-3" style={{ cursor: "pointer" }}></i>
